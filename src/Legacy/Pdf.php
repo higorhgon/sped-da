@@ -893,10 +893,11 @@ class Pdf extends Fpdf
         if (is_string($text)) {
             //remover espaços desnecessários
             $text = trim($text);
+            //decodifica os caracteres html no xml antes da conversao,
+            //senao as entidades viram bytes UTF-8 dentro do texto ISO-8859-1
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8');
             //converter o charset para o fpdf
             $text = $this->convertToIso($text);
-            //decodifica os caracteres html no xml
-            $text = html_entity_decode($text);
         } else {
             $text = (string) $text;
         }
@@ -1034,10 +1035,11 @@ class Pdf extends Fpdf
         if (is_string($text)) {
             //remover espaços desnecessários
             $text = trim($text);
+            //decodifica os caracteres html no xml antes da conversao,
+            //senao as entidades viram bytes UTF-8 dentro do texto ISO-8859-1
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8');
             //converter o charset para o fpdf
             $text = $this->convertToIso($text);
-            //decodifica os caracteres html no xml
-            $text = html_entity_decode($text);
         } else {
             $text = (string) $text;
         }
