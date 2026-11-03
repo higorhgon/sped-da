@@ -29,6 +29,15 @@ class Danfe extends DaCommon
      */
     public $exibirInfAdProd = true;
     /**
+     * Quantidade maxima de duplicatas exibidas no quadro de fatura.
+     * Acima disso o quadro mostra apenas um aviso para conferir no XML.
+     * Na paisagem o limite e de 27 (3 linhas de 9), pois uma 4a linha
+     * sobrepoe os dados adicionais.
+     *
+     * @var int
+     */
+    public $maxDuplicatas = 28;
+    /**
      * Define a exbição dos valores de PIS e Cofins
      *
      * @var bool
@@ -570,17 +579,13 @@ class Danfe extends DaCommon
         } elseif (isset($this->detPag) && $this->detPag->length > 0) {
             $qtdPag = $this->detPag->length;
         }
-        if (($qtdPag > 0) && ($qtdPag <= 7)) {
+        //cada linha comporta 7 duplicatas no retrato e 9 na paisagem;
+        //acima do limite o quadro exibe apenas o aviso, que ocupa uma linha
+        $dupPorLinha = $this->orientacao == 'P' ? 7 : 9;
+        if ($qtdPag > $this->limiteDuplicatas()) {
             $linhasDup = 1;
-        } elseif (($qtdPag > 7) && ($qtdPag <= 14)) {
-            $linhasDup = 2;
-        } elseif (($qtdPag > 14) && ($qtdPag <= 21)) {
-            $linhasDup = 3;
-        } elseif ($qtdPag > 21) {
-            // chinnonsantos 11/05/2016: Limite máximo de impressão de duplicatas na NFe,
-            // só vai ser exibito as 21 primeiras duplicatas (parcelas de pagamento),
-            // se não oculpa espaço d+, cada linha comporta até 7 duplicatas.
-            $linhasDup = 3;
+        } elseif ($qtdPag > 0) {
+            $linhasDup = (int) ceil($qtdPag / $dupPorLinha);
         }
         //verifica se será impressa a linha dos serviços ISSQN
         $linhaISSQN = 0;
@@ -1987,6 +1992,14 @@ class Danfe extends DaCommon
      *
      * @return number Posição vertical final
      */
+    protected function limiteDuplicatas(): int
+    {
+        if ($this->orientacao == 'P') {
+            return (int) $this->maxDuplicatas;
+        }
+        return min((int) $this->maxDuplicatas, 27);
+    }
+
     protected function fatura($x, $y)
     {
         $linha       = 1;
@@ -2010,14 +2023,16 @@ class Danfe extends DaCommon
             $dups    = "";
             $dupcont = 0;
             $nFat    = $this->dup->length;
-            if ($nFat > 7) {
+            $maxDupCont = $this->orientacao == 'P' ? 6 : 8;
+            $maxDups    = $this->limiteDuplicatas();
+            if ($nFat > $maxDups) {
                 $myH = 6;
                 $myW = $this->wPrint;
                 if ($this->orientacao == 'L') {
                     $myW -= $this->wCanhoto;
                 }
                 $aFont = ['font' => $this->fontePadrao, 'size' => 9, 'style' => ''];
-                $texto = "Existem mais de 7 duplicatas registradas, portanto não "
+                $texto = "Existem mais de {$maxDups} duplicatas registradas, portanto não "
                     . "serão exibidas, confira diretamente pelo XML.";
                 $this->pdf->textBox($x, $y, $myW, $myH, $texto, $aFont, 'C', 'C', 1, '');
 
@@ -2075,20 +2090,11 @@ class Danfe extends DaCommon
                 $this->pdf->textBox($x, $y, $w, $h, $vDup, $aFont, 'B', 'R', 0, '');
                 $x       += $w + $increm;
                 $dupcont += 1;
-                if ($this->orientacao == 'P') {
-                    $maxDupCont = 6;
-                } else {
-                    $maxDupCont = 8;
-                }
                 if ($dupcont > $maxDupCont) {
                     $y       += 9;
                     $x       = $oldx;
                     $dupcont = 0;
                     $linha   += 1;
-                }
-                if ($linha == 5) {
-                    $linha = 4;
-                    break;
                 }
             }
             if ($dupcont == 0) {
