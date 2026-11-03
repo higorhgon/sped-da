@@ -2010,14 +2010,17 @@ class Danfe extends DaCommon
             $dups    = "";
             $dupcont = 0;
             $nFat    = $this->dup->length;
-            if ($nFat > 7) {
+            //o calculo de altura da pagina reserva ate 3 linhas de duplicatas
+            $maxDupCont = $this->orientacao == 'P' ? 6 : 8;
+            $maxDups    = 3 * ($maxDupCont + 1);
+            if ($nFat > $maxDups) {
                 $myH = 6;
                 $myW = $this->wPrint;
                 if ($this->orientacao == 'L') {
                     $myW -= $this->wCanhoto;
                 }
                 $aFont = ['font' => $this->fontePadrao, 'size' => 9, 'style' => ''];
-                $texto = "Existem mais de 7 duplicatas registradas, portanto não "
+                $texto = "Existem mais de {$maxDups} duplicatas registradas, portanto não "
                     . "serão exibidas, confira diretamente pelo XML.";
                 $this->pdf->textBox($x, $y, $myW, $myH, $texto, $aFont, 'C', 'C', 1, '');
 
@@ -2075,19 +2078,14 @@ class Danfe extends DaCommon
                 $this->pdf->textBox($x, $y, $w, $h, $vDup, $aFont, 'B', 'R', 0, '');
                 $x       += $w + $increm;
                 $dupcont += 1;
-                if ($this->orientacao == 'P') {
-                    $maxDupCont = 6;
-                } else {
-                    $maxDupCont = 8;
-                }
                 if ($dupcont > $maxDupCont) {
                     $y       += 9;
                     $x       = $oldx;
                     $dupcont = 0;
                     $linha   += 1;
                 }
-                if ($linha == 5) {
-                    $linha = 4;
+                if ($linha == 4) {
+                    $linha = 3;
                     break;
                 }
             }
